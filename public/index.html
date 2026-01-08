@@ -1,223 +1,762 @@
-// Это файл сервера - он обрабатывает все запросы от пользователей
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лента</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f7f9fa;
+            color: #14171a;
+            padding: 0;
+            min-height: 100vh;
+            line-height: 1.4;
+        }
 
-const app = express();
-// На хостинге порт задается автоматически, локально используем 3000
-const PORT = process.env.PORT || 3000;
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+        }
 
-// Файлы где хранятся данные
-const DATA_FILE = 'data.json';
-const USERS_FILE = 'users.json';
-const ADMIN_CODE = 'часы'; // Кодовое слово для админа
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e1e8ed;
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.9);
+        }
 
-// Разрешаем серверу отдавать статические файлы (HTML, CSS, JS)
-app.use(express.static('public'));
-app.use(express.json());
+        .header-content {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-// Функция для чтения данных из файла
-function readData() {
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      const data = fs.readFileSync(DATA_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-    return { posts: [] };
-  } catch (error) {
-    return { posts: [] };
-  }
-}
+        h1 {
+            color: #14171a;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
 
-// Функция для записи данных в файл
-function writeData(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
+        .login-form, .post-form {
+            background: #ffffff;
+            border: 1px solid #e1e8ed;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
 
-// Функция для чтения пользователей
-function readUsers() {
-  try {
-    if (fs.existsSync(USERS_FILE)) {
-      const data = fs.readFileSync(USERS_FILE, 'utf8');
-      return JSON.parse(data);
-    }
-    return { users: [] };
-  } catch (error) {
-    return { users: [] };
-  }
-}
+        .login-form h2 {
+            color: #14171a;
+            font-size: 20px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
 
-// Функция для записи пользователей
-function writeUsers(data) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2));
-}
+        .user-info-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-// Регистрация нового пользователя
-app.post('/api/register', (req, res) => {
-  const { username, password, adminCode } = req.body;
-  
-  if (!username || username.trim().length === 0) {
-    return res.status(400).json({ error: 'Нужен никнейм' });
-  }
+        .username {
+            color: #1da1f2;
+            font-weight: 700;
+            font-size: 15px;
+        }
 
-  if (!password || password.trim().length === 0) {
-    return res.status(400).json({ error: 'Нужен пароль (минимум 1 символ)' });
-  }
+        .admin-badge {
+            color: #e0245e;
+            font-size: 14px;
+        }
 
-  const usersData = readUsers();
-  const usernameLower = username.trim().toLowerCase();
+        input, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            background: #ffffff;
+            border: 1px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 15px;
+            color: #14171a;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
 
-  // Проверяем что ник не занят
-  if (usersData.users.some(u => u.username.toLowerCase() === usernameLower)) {
-    return res.status(400).json({ error: 'Этот ник уже занят' });
-  }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #1da1f2;
+            box-shadow: 0 0 0 2px rgba(29, 161, 242, 0.1);
+        }
 
-  // Проверяем кодовое слово для админа
-  const isAdmin = adminCode === ADMIN_CODE;
+        input::placeholder, textarea::placeholder {
+            color: #657786;
+        }
 
-  const newUser = {
-    id: Date.now().toString(),
-    username: username.trim(),
-    password: password.trim(), // Сохраняем пароль (в реальном проекте нужно хешировать!)
-    isAdmin: isAdmin,
-    date: new Date().toISOString()
-  };
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            line-height: 1.5;
+        }
 
-  usersData.users.push(newUser);
-  writeUsers(usersData);
+        button {
+            background: #1da1f2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
 
-  res.json({ 
-    id: newUser.id,
-    username: newUser.username,
-    isAdmin: newUser.isAdmin
-  });
-});
+        button:hover {
+            background: #1a91da;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
 
-// Вход пользователя
-app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
-  
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Нужен никнейм и пароль' });
-  }
+        button:active {
+            transform: scale(0.98);
+        }
 
-  const usersData = readUsers();
-  const usernameLower = username.trim().toLowerCase();
-  
-  const user = usersData.users.find(u => 
-    u.username.toLowerCase() === usernameLower
-  );
+        button.logout-btn {
+            background: transparent;
+            color: #657786;
+            border: 1px solid #e1e8ed;
+            padding: 8px 16px;
+            font-weight: 600;
+            box-shadow: none;
+        }
 
-  if (!user) {
-    return res.status(401).json({ error: 'Неверный ник или пароль' });
-  }
+        button.logout-btn:hover {
+            background: #f7f9fa;
+            border-color: #ccd6dd;
+            color: #14171a;
+        }
 
-  // Проверяем пароль (если у пользователя нет пароля, значит это старый пользователь - отказываем)
-  if (!user.password || user.password !== password.trim()) {
-    return res.status(401).json({ error: 'Неверный ник или пароль' });
-  }
+        .posts {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
 
-  res.json({ 
-    id: user.id,
-    username: user.username,
-    isAdmin: user.isAdmin
-  });
-});
+        .post {
+            background: #ffffff;
+            border: 1px solid #e1e8ed;
+            border-radius: 16px;
+            padding: 16px;
+            margin: 0 16px 12px 16px;
+            transition: background 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
 
-// Получить всех пользователей (для проверки ников)
-app.get('/api/users', (req, res) => {
-  const usersData = readUsers();
-  res.json(usersData.users.map(u => ({ id: u.id, username: u.username, isAdmin: u.isAdmin })));
-});
+        .post:hover {
+            background: #f7f9fa;
+        }
 
-// Получить все посты
-app.get('/api/posts', (req, res) => {
-  const data = readData();
-  res.json(data.posts);
-});
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
 
-// Добавить новый пост
-app.post('/api/posts', (req, res) => {
-  const { text, authorId, author } = req.body;
-  
-  if (!text || !authorId || !author) {
-    return res.status(400).json({ error: 'Нужен текст и автор' });
-  }
+        .post-author {
+            font-weight: 700;
+            color: #1da1f2;
+            font-size: 15px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-  const data = readData();
-  const newPost = {
-    id: Date.now().toString(),
-    text: text,
-    author: author,
-    authorId: authorId,
-    date: new Date().toISOString(),
-    comments: []
-  };
+        .post-author:hover {
+            color: #1a91da;
+            text-decoration: underline;
+        }
 
-  data.posts.unshift(newPost); // Добавляем в начало
-  writeData(data);
+        .post-author.admin {
+            color: #e0245e;
+        }
 
-  res.json(newPost);
-});
+        .post-author.admin:hover {
+            color: #c91e56;
+        }
 
-// Добавить комментарий к посту
-app.post('/api/posts/:id/comments', (req, res) => {
-  const { text, authorId, author } = req.body;
-  const postId = req.params.id;
+        .post-author-date {
+            font-weight: 400;
+            font-size: 13px;
+            color: #657786;
+        }
 
-  if (!text || !authorId || !author) {
-    return res.status(400).json({ error: 'Нужен текст и автор' });
-  }
+        .post-text {
+            color: #14171a;
+            margin-bottom: 12px;
+            line-height: 1.6;
+            font-size: 15px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
 
-  const data = readData();
-  const post = data.posts.find(p => p.id === postId);
 
-  if (!post) {
-    return res.status(404).json({ error: 'Пост не найден' });
-  }
+        .delete-btn {
+            background: #e0245e;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 16px;
+        }
 
-  const newComment = {
-    id: Date.now().toString(),
-    text: text,
-    author: author,
-    authorId: authorId,
-    date: new Date().toISOString()
-  };
+        .delete-btn:hover {
+            background: #c91e56;
+        }
 
-  post.comments = post.comments || [];
-  post.comments.push(newComment);
-  writeData(data);
+        .comments {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e1e8ed;
+        }
 
-  res.json(newComment);
-});
+        .comments-title {
+            font-size: 13px;
+            color: #657786;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
 
-// Удалить пост
-app.delete('/api/posts/:id', (req, res) => {
-  const { userId, isAdmin } = req.body;
-  const postId = req.params.id;
+        .comment {
+            background: #f7f9fa;
+            border: 1px solid #e1e8ed;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
 
-  const data = readData();
-  const post = data.posts.find(p => p.id === postId);
+        .comment-author {
+            font-weight: 700;
+            font-size: 13px;
+            color: #1da1f2;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
 
-  if (!post) {
-    return res.status(404).json({ error: 'Пост не найден' });
-  }
+        .comment-text {
+            font-size: 14px;
+            color: #14171a;
+            line-height: 1.5;
+        }
 
-  // Проверяем права: только админ или создатель поста может удалить
-  const canDelete = isAdmin === true || post.authorId === userId;
+        .comment-date {
+            font-size: 12px;
+            color: #657786;
+            margin-left: 6px;
+            font-weight: 400;
+        }
 
-  if (!canDelete) {
-    return res.status(403).json({ error: 'Нет прав на удаление этого поста' });
-  }
+        .comment-form {
+            margin-top: 12px;
+        }
 
-  data.posts = data.posts.filter(post => post.id !== postId);
-  writeData(data);
-  res.json({ success: true });
-});
+        .comment-form textarea {
+            min-height: 70px;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
 
-// Запускаем сервер
-app.listen(PORT, () => {
-  console.log(`Сервер работает на http://localhost:${PORT}`);
-  console.log('Открой браузер и перейди по этому адресу!');
-});
+        .comment-btn {
+            background: #1da1f2;
+            padding: 8px 16px;
+            font-size: 13px;
+            border-radius: 16px;
+        }
+
+        .comment-btn:hover {
+            background: #1a91da;
+        }
+
+        .info-text {
+            font-size: 13px;
+            color: #657786;
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #657786;
+            padding: 60px 20px;
+            font-size: 15px;
+            background: #ffffff;
+            border-top: 1px solid #e1e8ed;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 0;
+            }
+
+            .login-form, .post-form {
+                margin: 12px;
+                border-radius: 12px;
+                padding: 16px;
+            }
+
+            .post {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>Лента</h1>
+            <div class="user-info-header hidden" id="userInfoHeader">
+                <span class="username">
+                    <span id="currentUsernameHeader"></span>
+                    <span id="adminBadgeHeader" class="admin-badge hidden">👑</span>
+                </span>
+                <button class="logout-btn" onclick="logout()">Выйти</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Форма регистрации/логина -->
+        <div class="login-form" id="loginForm">
+            <h2>Вход / Регистрация</h2>
+            <input type="text" id="username" placeholder="Твой ник" required>
+            <input type="password" id="password" placeholder="Пароль (минимум 1 символ)" required>
+            <input type="text" id="adminCode" placeholder="Кодовое слово для админа (необязательно)">
+            <div style="display: flex; gap: 8px;">
+                <button onclick="login()" style="flex: 1;">Войти</button>
+                <button onclick="register()" style="flex: 1; background: #17bf63;">Зарегистрироваться</button>
+            </div>
+            <p class="info-text">
+                Кодовое слово для админа: "часы"
+            </p>
+        </div>
+        
+        <!-- Форма для поста -->
+        <div class="post-form hidden" id="postForm">
+            <textarea id="text" placeholder="Что у тебя нового?" required></textarea>
+            <button onclick="addPost()">Опубликовать</button>
+        </div>
+
+        <div class="posts" id="posts"></div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        // Проверяем есть ли сохраненный пользователь
+        window.onload = function() {
+            try {
+                const saved = localStorage.getItem('currentUser');
+                if (saved) {
+                    currentUser = JSON.parse(saved);
+                    showMainInterface();
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке пользователя:', error);
+            }
+        };
+
+        // Обработка ошибок JavaScript
+        window.addEventListener('error', function(e) {
+            console.error('Ошибка JavaScript:', e.error);
+            alert('Произошла ошибка. Проверь консоль браузера (F12)');
+        });
+
+        // Регистрация
+        async function register() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const adminCode = document.getElementById('adminCode').value.trim();
+
+            if (!username) {
+                alert('Введи ник!');
+                return;
+            }
+
+            if (!password) {
+                alert('Введи пароль!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password, adminCode })
+                });
+
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    console.error('Ошибка парсинга JSON:', e);
+                    alert('Ошибка сервера. Проверь что сервер запущен.');
+                    return;
+                }
+
+                if (response.ok) {
+                    currentUser = data;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showMainInterface();
+                } else {
+                    alert(data.error || 'Ошибка регистрации');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при регистрации: ' + error.message);
+            }
+        }
+
+        // Вход
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!username || !password) {
+                alert('Введи ник и пароль!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    console.error('Ошибка парсинга JSON:', e);
+                    alert('Ошибка сервера. Проверь что сервер запущен.');
+                    return;
+                }
+
+                if (response.ok) {
+                    currentUser = data;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showMainInterface();
+                } else {
+                    alert(data.error || 'Ошибка входа');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при входе: ' + error.message);
+            }
+        }
+
+        // Показать основной интерфейс
+        function showMainInterface() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('userInfoHeader').classList.remove('hidden');
+            document.getElementById('postForm').classList.remove('hidden');
+            
+            document.getElementById('currentUsernameHeader').textContent = currentUser.username;
+            
+            if (currentUser.isAdmin) {
+                document.getElementById('adminBadgeHeader').classList.remove('hidden');
+            } else {
+                document.getElementById('adminBadgeHeader').classList.add('hidden');
+            }
+
+            loadPosts();
+        }
+
+        // Выход
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('userInfoHeader').classList.add('hidden');
+            document.getElementById('postForm').classList.add('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('adminCode').value = '';
+            document.getElementById('posts').innerHTML = '';
+        }
+
+        // Загружаем посты при загрузке страницы
+        if (currentUser) {
+            loadPosts();
+        }
+
+        // Загружаем посты каждые 3 секунды
+        setInterval(() => {
+            if (currentUser) {
+                loadPosts();
+            }
+        }, 3000);
+
+        // Сохраняем текст комментариев перед обновлением
+        function saveCommentTexts() {
+            const commentTexts = {};
+            document.querySelectorAll('[id^="comment-"]').forEach(textarea => {
+                const postId = textarea.id.replace('comment-', '');
+                const text = textarea.value; // Сохраняем даже пустой текст, чтобы не потерять позицию курсора
+                commentTexts[postId] = text;
+            });
+            return commentTexts;
+        }
+
+        // Сохраняем текст комментария в реальном времени
+        function setupCommentAutoSave(postId) {
+            const textarea = document.getElementById(`comment-${postId}`);
+            if (textarea) {
+                // Сохраняем при каждом изменении
+                textarea.addEventListener('input', function() {
+                    const savedComments = JSON.parse(localStorage.getItem('savedComments') || '{}');
+                    savedComments[postId] = this.value;
+                    localStorage.setItem('savedComments', JSON.stringify(savedComments));
+                });
+            }
+        }
+
+        // Функция для загрузки всех постов
+        async function loadPosts() {
+            // Сохраняем текст комментариев перед обновлением
+            const savedComments = saveCommentTexts();
+            // Также берем из localStorage для надежности
+            const savedFromStorage = JSON.parse(localStorage.getItem('savedComments') || '{}');
+            // Объединяем оба источника (приоритет у текущих значений)
+            const allSaved = { ...savedFromStorage, ...savedComments };
+            
+            try {
+                const response = await fetch('/api/posts');
+                const posts = await response.json();
+                displayPosts(posts, allSaved);
+            } catch (error) {
+                console.error('Ошибка загрузки постов:', error);
+            }
+        }
+
+        // Функция для отображения постов на странице
+        function displayPosts(posts, savedComments = {}) {
+            const postsDiv = document.getElementById('posts');
+            postsDiv.innerHTML = '';
+
+            if (posts.length === 0) {
+                postsDiv.innerHTML = '<div class="empty-state">Пока нет постов. Будь первым!</div>';
+                return;
+            }
+
+            // Массив месяцев (объявляем один раз)
+            const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+
+            posts.forEach(post => {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+                
+
+                // Проверяем может ли пользователь удалить пост
+                const canDelete = currentUser && (currentUser.isAdmin || post.authorId === currentUser.id);
+                const deleteBtn = canDelete 
+                    ? `<button class="delete-btn" onclick="deletePost('${post.id}')">Удалить</button>`
+                    : '';
+
+                // Комментарии
+                const commentsHtml = (post.comments || []).map(comment => {
+                    const commentDate = new Date(comment.date);
+                    const commentDateStr = `${months[commentDate.getMonth()]} ${commentDate.getHours().toString().padStart(2, '0')}:${commentDate.getMinutes().toString().padStart(2, '0')}`;
+                    return `
+                        <div class="comment">
+                            <div class="comment-author">${comment.author}<span class="comment-date">• ${commentDateStr}</span></div>
+                            <div class="comment-text">${comment.text}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Форма для комментария
+                // Восстанавливаем сохраненный текст комментария если есть
+                const savedText = (savedComments[post.id] || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const commentForm = currentUser ? `
+                    <div class="comment-form">
+                        <textarea id="comment-${post.id}" placeholder="Написать комментарий...">${savedText}</textarea>
+                        <button class="comment-btn" onclick="addComment('${post.id}')">Комментировать</button>
+                    </div>
+                ` : '';
+
+                const isPostAuthorAdmin = post.authorId === currentUser?.id && currentUser?.isAdmin;
+                const authorClass = isPostAuthorAdmin ? 'admin' : '';
+                
+                // Форматируем дату: месяц сокращенно, часы:минуты
+                const postDate = new Date(post.date);
+                const postDateStr = `${months[postDate.getMonth()]} ${postDate.getHours().toString().padStart(2, '0')}:${postDate.getMinutes().toString().padStart(2, '0')}`;
+
+                postDiv.innerHTML = `
+                    <div class="post-header">
+                        <div class="post-author ${authorClass}">
+                            ${post.author}${isPostAuthorAdmin ? ' 👑' : ''}
+                            <span class="post-author-date">• ${postDateStr}</span>
+                        </div>
+                        ${deleteBtn ? `<div>${deleteBtn}</div>` : ''}
+                    </div>
+                    <div class="post-text">${post.text}</div>
+                    <div class="comments">
+                        <div class="comments-title">Комментарии (${(post.comments || []).length})</div>
+                        ${commentsHtml}
+                        ${commentForm}
+                    </div>
+                `;
+                
+                postsDiv.appendChild(postDiv);
+                
+                // Настраиваем автосохранение для комментария
+                if (currentUser) {
+                    setTimeout(() => setupCommentAutoSave(post.id), 100);
+                }
+            });
+        }
+
+        // Функция для добавления нового поста
+        async function addPost() {
+            if (!currentUser) {
+                alert('Сначала войди!');
+                return;
+            }
+
+            const text = document.getElementById('text').value.trim();
+
+            if (!text) {
+                alert('Напиши что-нибудь!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/posts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        text, 
+                        authorId: currentUser.id,
+                        author: currentUser.username
+                    })
+                });
+
+                if (response.ok) {
+                    document.getElementById('text').value = '';
+                    loadPosts();
+                } else {
+                    alert('Ошибка при публикации поста');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при публикации поста');
+            }
+        }
+
+        // Функция для добавления комментария
+        async function addComment(postId) {
+            if (!currentUser) {
+                alert('Сначала войди!');
+                return;
+            }
+
+            const text = document.getElementById(`comment-${postId}`).value.trim();
+
+            if (!text) {
+                alert('Напиши комментарий!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/posts/${postId}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        text, 
+                        authorId: currentUser.id,
+                        author: currentUser.username
+                    })
+                });
+
+                if (response.ok) {
+                    // Очищаем сохраненный комментарий
+                    const savedComments = JSON.parse(localStorage.getItem('savedComments') || '{}');
+                    delete savedComments[postId];
+                    localStorage.setItem('savedComments', JSON.stringify(savedComments));
+                    
+                    document.getElementById(`comment-${postId}`).value = '';
+                    loadPosts();
+                } else {
+                    alert('Ошибка при добавлении комментария');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при добавлении комментария');
+            }
+        }
+
+        // Функция для удаления поста
+        async function deletePost(id) {
+            if (!confirm('Удалить этот пост?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/posts/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        userId: currentUser.id,
+                        isAdmin: currentUser.isAdmin
+                    })
+                });
+
+                if (response.ok) {
+                    loadPosts();
+                } else {
+                    const data = await response.json();
+                    alert(data.error || 'Ошибка при удалении поста');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при удалении поста');
+            }
+        }
+    </script>
+</body>
+</html>
