@@ -457,19 +457,35 @@
             }
         }, 3000);
 
+        // Сохраняем текст комментариев перед обновлением
+        function saveCommentTexts() {
+            const commentTexts = {};
+            document.querySelectorAll('[id^="comment-"]').forEach(textarea => {
+                const postId = textarea.id.replace('comment-', '');
+                const text = textarea.value;
+                if (text.trim()) {
+                    commentTexts[postId] = text;
+                }
+            });
+            return commentTexts;
+        }
+
         // Функция для загрузки всех постов
         async function loadPosts() {
+            // Сохраняем текст комментариев перед обновлением
+            const savedComments = saveCommentTexts();
+            
             try {
                 const response = await fetch('/api/posts');
                 const posts = await response.json();
-                displayPosts(posts);
+                displayPosts(posts, savedComments);
             } catch (error) {
                 console.error('Ошибка загрузки постов:', error);
             }
         }
 
         // Функция для отображения постов на странице
-        function displayPosts(posts) {
+        function displayPosts(posts, savedComments = {}) {
             const postsDiv = document.getElementById('posts');
             postsDiv.innerHTML = '';
 
@@ -513,9 +529,11 @@
                 }).join('');
 
                 // Форма для комментария
+                // Восстанавливаем сохраненный текст комментария если есть
+                const savedText = savedComments[post.id] || '';
                 const commentForm = currentUser ? `
                     <div class="comment-form">
-                        <textarea id="comment-${post.id}" placeholder="Написать комментарий..."></textarea>
+                        <textarea id="comment-${post.id}" placeholder="Написать комментарий...">${savedText}</textarea>
                         <button class="comment-btn" onclick="addComment('${post.id}')">Комментировать</button>
                     </div>
                 ` : '';
