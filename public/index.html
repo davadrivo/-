@@ -161,17 +161,16 @@
 
         .post {
             background: #ffffff;
-            border-bottom: 1px solid #e1e8ed;
+            border: 1px solid #e1e8ed;
+            border-radius: 16px;
             padding: 16px;
+            margin: 0 16px 12px 16px;
             transition: background 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .post:hover {
             background: #f7f9fa;
-        }
-
-        .post:first-child {
-            border-top: 1px solid #e1e8ed;
         }
 
         .post-header {
@@ -187,6 +186,9 @@
             font-size: 15px;
             cursor: pointer;
             transition: color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .post-author:hover {
@@ -202,6 +204,12 @@
             color: #c91e56;
         }
 
+        .post-author-date {
+            font-weight: 400;
+            font-size: 13px;
+            color: #657786;
+        }
+
         .post-text {
             color: #14171a;
             margin-bottom: 12px;
@@ -211,18 +219,6 @@
             word-wrap: break-word;
         }
 
-        .post-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 12px;
-            padding-top: 12px;
-        }
-
-        .post-date {
-            font-size: 13px;
-            color: #657786;
-        }
 
         .delete-btn {
             background: #e0245e;
@@ -262,6 +258,9 @@
             font-size: 13px;
             color: #1da1f2;
             margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .comment-text {
@@ -353,11 +352,15 @@
         <!-- Форма регистрации/логина -->
         <div class="login-form" id="loginForm">
             <h2>Вход / Регистрация</h2>
-            <input type="text" id="username" placeholder="Твой ник (уникальный)" required>
+            <input type="text" id="username" placeholder="Твой ник" required>
+            <input type="password" id="password" placeholder="Пароль (минимум 1 символ)" required>
             <input type="text" id="adminCode" placeholder="Кодовое слово для админа (необязательно)">
-            <button onclick="register()">Войти / Зарегистрироваться</button>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="login()" style="flex: 1;">Войти</button>
+                <button onclick="register()" style="flex: 1; background: #17bf63;">Зарегистрироваться</button>
+            </div>
             <p class="info-text">
-                Если ник занят, выбери другой. Кодовое слово для админа: "часы"
+                Кодовое слово для админа: "часы"
             </p>
         </div>
         
@@ -382,13 +385,19 @@
             }
         };
 
-        // Регистрация/логин
+        // Регистрация
         async function register() {
             const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
             const adminCode = document.getElementById('adminCode').value.trim();
 
             if (!username) {
                 alert('Введи ник!');
+                return;
+            }
+
+            if (!password) {
+                alert('Введи пароль!');
                 return;
             }
 
@@ -398,7 +407,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username, adminCode })
+                    body: JSON.stringify({ username, password, adminCode })
                 });
 
                 const data = await response.json();
@@ -413,6 +422,40 @@
             } catch (error) {
                 console.error('Ошибка:', error);
                 alert('Ошибка при регистрации');
+            }
+        }
+
+        // Вход
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!username || !password) {
+                alert('Введи ник и пароль!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentUser = data;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showMainInterface();
+                } else {
+                    alert(data.error || 'Ошибка входа');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при входе');
             }
         }
 
@@ -441,6 +484,7 @@
             document.getElementById('userInfoHeader').classList.add('hidden');
             document.getElementById('postForm').classList.add('hidden');
             document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
             document.getElementById('adminCode').value = '';
             document.getElementById('posts').innerHTML = '';
         }
@@ -462,23 +506,38 @@
             const commentTexts = {};
             document.querySelectorAll('[id^="comment-"]').forEach(textarea => {
                 const postId = textarea.id.replace('comment-', '');
-                const text = textarea.value;
-                if (text.trim()) {
-                    commentTexts[postId] = text;
-                }
+                const text = textarea.value; // Сохраняем даже пустой текст, чтобы не потерять позицию курсора
+                commentTexts[postId] = text;
             });
             return commentTexts;
+        }
+
+        // Сохраняем текст комментария в реальном времени
+        function setupCommentAutoSave(postId) {
+            const textarea = document.getElementById(`comment-${postId}`);
+            if (textarea) {
+                // Сохраняем при каждом изменении
+                textarea.addEventListener('input', function() {
+                    const savedComments = JSON.parse(localStorage.getItem('savedComments') || '{}');
+                    savedComments[postId] = this.value;
+                    localStorage.setItem('savedComments', JSON.stringify(savedComments));
+                });
+            }
         }
 
         // Функция для загрузки всех постов
         async function loadPosts() {
             // Сохраняем текст комментариев перед обновлением
             const savedComments = saveCommentTexts();
+            // Также берем из localStorage для надежности
+            const savedFromStorage = JSON.parse(localStorage.getItem('savedComments') || '{}');
+            // Объединяем оба источника (приоритет у текущих значений)
+            const allSaved = { ...savedFromStorage, ...savedComments };
             
             try {
                 const response = await fetch('/api/posts');
                 const posts = await response.json();
-                displayPosts(posts, savedComments);
+                displayPosts(posts, allSaved);
             } catch (error) {
                 console.error('Ошибка загрузки постов:', error);
             }
@@ -498,13 +557,6 @@
                 const postDiv = document.createElement('div');
                 postDiv.className = 'post';
                 
-                const date = new Date(post.date);
-                const dateStr = date.toLocaleString('ru-RU', { 
-                    day: 'numeric', 
-                    month: 'short', 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                });
 
                 // Проверяем может ли пользователь удалить пост
                 const canDelete = currentUser && (currentUser.isAdmin || post.authorId === currentUser.id);
@@ -513,16 +565,13 @@
                     : '';
 
                 // Комментарии
+                const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
                 const commentsHtml = (post.comments || []).map(comment => {
-                    const commentDate = new Date(comment.date).toLocaleString('ru-RU', { 
-                        day: 'numeric', 
-                        month: 'short', 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                    });
+                    const commentDate = new Date(comment.date);
+                    const commentDateStr = `${months[commentDate.getMonth()]} ${commentDate.getHours().toString().padStart(2, '0')}:${commentDate.getMinutes().toString().padStart(2, '0')}`;
                     return `
                         <div class="comment">
-                            <div class="comment-author">${comment.author}<span class="comment-date">• ${commentDate}</span></div>
+                            <div class="comment-author">${comment.author}<span class="comment-date">• ${commentDateStr}</span></div>
                             <div class="comment-text">${comment.text}</div>
                         </div>
                     `;
@@ -530,7 +579,7 @@
 
                 // Форма для комментария
                 // Восстанавливаем сохраненный текст комментария если есть
-                const savedText = savedComments[post.id] || '';
+                const savedText = (savedComments[post.id] || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 const commentForm = currentUser ? `
                     <div class="comment-form">
                         <textarea id="comment-${post.id}" placeholder="Написать комментарий...">${savedText}</textarea>
@@ -541,17 +590,20 @@
                 const isPostAuthorAdmin = post.authorId === currentUser?.id && currentUser?.isAdmin;
                 const authorClass = isPostAuthorAdmin ? 'admin' : '';
                 
+                // Форматируем дату: месяц сокращенно, часы:минуты
+                const months = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+                const postDate = new Date(post.date);
+                const postDateStr = `${months[postDate.getMonth()]} ${postDate.getHours().toString().padStart(2, '0')}:${postDate.getMinutes().toString().padStart(2, '0')}`;
+
                 postDiv.innerHTML = `
                     <div class="post-header">
                         <div class="post-author ${authorClass}">
                             ${post.author}${isPostAuthorAdmin ? ' 👑' : ''}
+                            <span class="post-author-date">• ${postDateStr}</span>
                         </div>
                         ${deleteBtn ? `<div>${deleteBtn}</div>` : ''}
                     </div>
                     <div class="post-text">${post.text}</div>
-                    <div class="post-footer">
-                        <div class="post-date">${dateStr}</div>
-                    </div>
                     <div class="comments">
                         <div class="comments-title">Комментарии (${(post.comments || []).length})</div>
                         ${commentsHtml}
@@ -560,6 +612,11 @@
                 `;
                 
                 postsDiv.appendChild(postDiv);
+                
+                // Настраиваем автосохранение для комментария
+                if (currentUser) {
+                    setTimeout(() => setupCommentAutoSave(post.id), 100);
+                }
             });
         }
 
@@ -630,6 +687,11 @@
                 });
 
                 if (response.ok) {
+                    // Очищаем сохраненный комментарий
+                    const savedComments = JSON.parse(localStorage.getItem('savedComments') || '{}');
+                    delete savedComments[postId];
+                    localStorage.setItem('savedComments', JSON.stringify(savedComments));
+                    
                     document.getElementById(`comment-${postId}`).value = '';
                     loadPosts();
                 } else {
