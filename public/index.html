@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Простая Соц Сеть</title>
+    <title>Лента</title>
     <style>
         * {
             margin: 0;
@@ -13,180 +13,200 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #0d1117;
-            color: #c9d1d9;
+            background: #f7f9fa;
+            color: #14171a;
             padding: 0;
             min-height: 100vh;
+            line-height: 1.4;
         }
 
         .container {
-            max-width: 680px;
+            max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0;
         }
 
         .header {
-            background: #161b22;
-            border-bottom: 1px solid #30363d;
-            padding: 16px 0;
-            margin-bottom: 20px;
+            background: #ffffff;
+            border-bottom: 1px solid #e1e8ed;
+            padding: 12px 16px;
             position: sticky;
             top: 0;
             z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.9);
         }
 
         .header-content {
-            max-width: 680px;
+            max-width: 600px;
             margin: 0 auto;
-            padding: 0 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         h1 {
-            color: #f0f6fc;
+            color: #14171a;
             font-size: 20px;
-            font-weight: 600;
+            font-weight: 700;
+            letter-spacing: -0.3px;
         }
 
         .login-form, .post-form {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 16px;
-            margin-bottom: 16px;
+            background: #ffffff;
+            border: 1px solid #e1e8ed;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .login-form h2 {
-            color: #f0f6fc;
-            font-size: 18px;
-            margin-bottom: 16px;
-            font-weight: 600;
+            color: #14171a;
+            font-size: 20px;
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
         }
 
-        .user-info {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
+        .user-info-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-        }
-
-        .user-info.admin {
-            border-color: #f85149;
-            background: #1c2128;
-        }
-
-        .user-info.admin .username {
-            color: #f85149;
+            gap: 12px;
         }
 
         .username {
-            color: #58a6ff;
-            font-weight: 600;
-            font-size: 14px;
+            color: #1da1f2;
+            font-weight: 700;
+            font-size: 15px;
         }
 
         .admin-badge {
-            color: #f85149;
-            font-size: 12px;
-            margin-left: 8px;
+            color: #e0245e;
+            font-size: 14px;
         }
 
         input, textarea {
             width: 100%;
-            padding: 8px 12px;
+            padding: 12px 16px;
             margin-bottom: 12px;
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            font-size: 14px;
-            color: #c9d1d9;
+            background: #ffffff;
+            border: 1px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 15px;
+            color: #14171a;
             font-family: inherit;
+            transition: all 0.2s ease;
         }
 
         input:focus, textarea:focus {
             outline: none;
-            border-color: #58a6ff;
-            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+            border-color: #1da1f2;
+            box-shadow: 0 0 0 2px rgba(29, 161, 242, 0.1);
         }
 
         input::placeholder, textarea::placeholder {
-            color: #6e7681;
+            color: #657786;
         }
 
         textarea {
-            min-height: 80px;
+            min-height: 100px;
             resize: vertical;
+            line-height: 1.5;
         }
 
         button {
-            background: #238636;
+            background: #1da1f2;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 10px 20px;
+            border-radius: 20px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 15px;
+            font-weight: 700;
             font-family: inherit;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
 
         button:hover {
-            background: #2ea043;
+            background: #1a91da;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: scale(0.98);
         }
 
         button.logout-btn {
-            background: #21262d;
-            color: #c9d1d9;
-            border: 1px solid #30363d;
+            background: transparent;
+            color: #657786;
+            border: 1px solid #e1e8ed;
+            padding: 8px 16px;
+            font-weight: 600;
+            box-shadow: none;
         }
 
         button.logout-btn:hover {
-            background: #30363d;
-            border-color: #484f58;
+            background: #f7f9fa;
+            border-color: #ccd6dd;
+            color: #14171a;
         }
 
         .posts {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 0;
         }
 
         .post {
-            background: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 6px;
+            background: #ffffff;
+            border-bottom: 1px solid #e1e8ed;
             padding: 16px;
+            transition: background 0.2s ease;
+        }
+
+        .post:hover {
+            background: #f7f9fa;
+        }
+
+        .post:first-child {
+            border-top: 1px solid #e1e8ed;
         }
 
         .post-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
+            align-items: flex-start;
+            margin-bottom: 8px;
         }
 
         .post-author {
-            font-weight: 600;
-            color: #58a6ff;
-            font-size: 14px;
+            font-weight: 700;
+            color: #1da1f2;
+            font-size: 15px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .post-author:hover {
+            color: #1a91da;
+            text-decoration: underline;
         }
 
         .post-author.admin {
-            color: #f85149;
+            color: #e0245e;
+        }
+
+        .post-author.admin:hover {
+            color: #c91e56;
         }
 
         .post-text {
-            color: #c9d1d9;
+            color: #14171a;
             margin-bottom: 12px;
             line-height: 1.6;
-            font-size: 14px;
+            font-size: 15px;
             white-space: pre-wrap;
             word-wrap: break-word;
         }
@@ -197,62 +217,64 @@
             align-items: center;
             margin-top: 12px;
             padding-top: 12px;
-            border-top: 1px solid #21262d;
         }
 
         .post-date {
-            font-size: 12px;
-            color: #8b949e;
+            font-size: 13px;
+            color: #657786;
         }
 
         .delete-btn {
-            background: #da3633;
-            padding: 4px 12px;
-            font-size: 12px;
+            background: #e0245e;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 16px;
         }
 
         .delete-btn:hover {
-            background: #f85149;
+            background: #c91e56;
         }
 
         .comments {
             margin-top: 16px;
             padding-top: 16px;
-            border-top: 1px solid #21262d;
+            border-top: 1px solid #e1e8ed;
         }
 
         .comments-title {
-            font-size: 12px;
-            color: #8b949e;
+            font-size: 13px;
+            color: #657786;
             margin-bottom: 12px;
             font-weight: 600;
         }
 
         .comment {
-            background: #0d1117;
-            border: 1px solid #21262d;
+            background: #f7f9fa;
+            border: 1px solid #e1e8ed;
             padding: 12px;
-            border-radius: 6px;
+            border-radius: 12px;
             margin-bottom: 8px;
         }
 
         .comment-author {
-            font-weight: 600;
-            font-size: 12px;
-            color: #58a6ff;
-            margin-bottom: 6px;
+            font-weight: 700;
+            font-size: 13px;
+            color: #1da1f2;
+            margin-bottom: 4px;
         }
 
         .comment-text {
-            font-size: 13px;
-            color: #c9d1d9;
+            font-size: 14px;
+            color: #14171a;
             line-height: 1.5;
         }
 
         .comment-date {
-            font-size: 11px;
-            color: #6e7681;
-            margin-left: 8px;
+            font-size: 12px;
+            color: #657786;
+            margin-left: 6px;
+            font-weight: 400;
         }
 
         .comment-form {
@@ -260,25 +282,26 @@
         }
 
         .comment-form textarea {
-            min-height: 60px;
-            font-size: 13px;
+            min-height: 70px;
+            font-size: 14px;
             margin-bottom: 8px;
         }
 
         .comment-btn {
-            background: #238636;
-            padding: 6px 12px;
-            font-size: 12px;
+            background: #1da1f2;
+            padding: 8px 16px;
+            font-size: 13px;
+            border-radius: 16px;
         }
 
         .comment-btn:hover {
-            background: #2ea043;
+            background: #1a91da;
         }
 
         .info-text {
-            font-size: 12px;
-            color: #6e7681;
-            margin-top: 8px;
+            font-size: 13px;
+            color: #657786;
+            margin-top: 12px;
             line-height: 1.5;
         }
 
@@ -288,9 +311,27 @@
 
         .empty-state {
             text-align: center;
-            color: #6e7681;
-            padding: 40px 20px;
-            font-size: 14px;
+            color: #657786;
+            padding: 60px 20px;
+            font-size: 15px;
+            background: #ffffff;
+            border-top: 1px solid #e1e8ed;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 0;
+            }
+
+            .login-form, .post-form {
+                margin: 12px;
+                border-radius: 12px;
+                padding: 16px;
+            }
+
+            .post {
+                padding: 12px;
+            }
         }
     </style>
 </head>
@@ -298,7 +339,7 @@
     <div class="header">
         <div class="header-content">
             <h1>Лента</h1>
-            <div class="user-info hidden" id="userInfoHeader">
+            <div class="user-info-header hidden" id="userInfoHeader">
                 <span class="username">
                     <span id="currentUsernameHeader"></span>
                     <span id="adminBadgeHeader" class="admin-badge hidden">👑</span>
@@ -442,17 +483,27 @@
                 postDiv.className = 'post';
                 
                 const date = new Date(post.date);
-                const dateStr = date.toLocaleString('ru-RU');
+                const dateStr = date.toLocaleString('ru-RU', { 
+                    day: 'numeric', 
+                    month: 'short', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
 
                 // Проверяем может ли пользователь удалить пост
-                const canDelete = currentUser.isAdmin || post.authorId === currentUser.id;
+                const canDelete = currentUser && (currentUser.isAdmin || post.authorId === currentUser.id);
                 const deleteBtn = canDelete 
                     ? `<button class="delete-btn" onclick="deletePost('${post.id}')">Удалить</button>`
                     : '';
 
                 // Комментарии
                 const commentsHtml = (post.comments || []).map(comment => {
-                    const commentDate = new Date(comment.date).toLocaleString('ru-RU');
+                    const commentDate = new Date(comment.date).toLocaleString('ru-RU', { 
+                        day: 'numeric', 
+                        month: 'short', 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
                     return `
                         <div class="comment">
                             <div class="comment-author">${comment.author}<span class="comment-date">• ${commentDate}</span></div>
@@ -462,14 +513,14 @@
                 }).join('');
 
                 // Форма для комментария
-                const commentForm = `
+                const commentForm = currentUser ? `
                     <div class="comment-form">
                         <textarea id="comment-${post.id}" placeholder="Написать комментарий..."></textarea>
                         <button class="comment-btn" onclick="addComment('${post.id}')">Комментировать</button>
                     </div>
-                `;
+                ` : '';
 
-                const isPostAuthorAdmin = post.authorId === currentUser.id && currentUser.isAdmin;
+                const isPostAuthorAdmin = post.authorId === currentUser?.id && currentUser?.isAdmin;
                 const authorClass = isPostAuthorAdmin ? 'admin' : '';
                 
                 postDiv.innerHTML = `
