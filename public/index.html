@@ -25,12 +25,27 @@
             text-align: center;
         }
 
-        .post-form {
+        .login-form, .post-form {
             background: white;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .user-info {
+            background: #1da1f2;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info.admin {
+            background: #e74c3c;
         }
 
         input, textarea {
@@ -80,6 +95,10 @@
             margin-bottom: 5px;
         }
 
+        .post-author.admin {
+            color: #e74c3c;
+        }
+
         .post-text {
             color: #333;
             margin-bottom: 10px;
@@ -101,13 +120,81 @@
         .delete-btn:hover {
             background: #c0392b;
         }
+
+        .comments {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .comment {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .comment-author {
+            font-weight: bold;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .comment-text {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .comment-form {
+            margin-top: 10px;
+        }
+
+        .comment-form textarea {
+            min-height: 60px;
+            font-size: 13px;
+        }
+
+        .comment-btn {
+            background: #17bf63;
+            padding: 5px 15px;
+            font-size: 12px;
+        }
+
+        .comment-btn:hover {
+            background: #15a357;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <h1>🐦 Простая Соц Сеть</h1>
     
-    <div class="post-form">
-        <input type="text" id="author" placeholder="Твое имя" required>
+    <!-- Форма регистрации/логина -->
+    <div class="login-form" id="loginForm">
+        <h2>Вход / Регистрация</h2>
+        <input type="text" id="username" placeholder="Твой ник (уникальный)" required>
+        <input type="text" id="adminCode" placeholder="Кодовое слово для админа (необязательно)">
+        <button onclick="register()">Войти / Зарегистрироваться</button>
+        <p style="font-size: 12px; color: #999; margin-top: 10px;">
+            Если ник занят, выбери другой. Кодовое слово для админа: "часы"
+        </p>
+    </div>
+
+    <!-- Информация о пользователе -->
+    <div class="user-info hidden" id="userInfo">
+        <div>
+            <strong id="currentUsername"></strong>
+            <span id="adminBadge" class="hidden"> 👑 АДМИН</span>
+        </div>
+        <button onclick="logout()" style="background: #999;">Выйти</button>
+    </div>
+    
+    <!-- Форма для поста -->
+    <div class="post-form hidden" id="postForm">
         <textarea id="text" placeholder="Что у тебя нового?" required></textarea>
         <button onclick="addPost()">Опубликовать</button>
     </div>
@@ -115,11 +202,93 @@
     <div class="posts" id="posts"></div>
 
     <script>
-        // Загружаем посты при загрузке страницы
-        loadPosts();
+        let currentUser = null;
 
-        // Загружаем посты каждые 3 секунды (чтобы видеть новые посты других)
-        setInterval(loadPosts, 3000);
+        // Проверяем есть ли сохраненный пользователь
+        window.onload = function() {
+            const saved = localStorage.getItem('currentUser');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                showMainInterface();
+            }
+        };
+
+        // Регистрация/логин
+        async function register() {
+            const username = document.getElementById('username').value.trim();
+            const adminCode = document.getElementById('adminCode').value.trim();
+
+            if (!username) {
+                alert('Введи ник!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, adminCode })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentUser = data;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showMainInterface();
+                } else {
+                    alert(data.error || 'Ошибка регистрации');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при регистрации');
+            }
+        }
+
+        // Показать основной интерфейс
+        function showMainInterface() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('postForm').classList.remove('hidden');
+            
+            const userInfo = document.getElementById('userInfo');
+            document.getElementById('currentUsername').textContent = currentUser.username;
+            
+            if (currentUser.isAdmin) {
+                userInfo.classList.add('admin');
+                document.getElementById('adminBadge').classList.remove('hidden');
+            } else {
+                userInfo.classList.remove('admin');
+                document.getElementById('adminBadge').classList.add('hidden');
+            }
+
+            loadPosts();
+        }
+
+        // Выход
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('userInfo').classList.add('hidden');
+            document.getElementById('postForm').classList.add('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('adminCode').value = '';
+        }
+
+        // Загружаем посты при загрузке страницы
+        if (currentUser) {
+            loadPosts();
+        }
+
+        // Загружаем посты каждые 3 секунды
+        setInterval(() => {
+            if (currentUser) {
+                loadPosts();
+            }
+        }, 3000);
 
         // Функция для загрузки всех постов
         async function loadPosts() {
@@ -149,11 +318,43 @@
                 const date = new Date(post.date);
                 const dateStr = date.toLocaleString('ru-RU');
 
+                // Проверяем может ли пользователь удалить пост
+                const canDelete = currentUser.isAdmin || post.authorId === currentUser.id;
+                const deleteBtn = canDelete 
+                    ? `<button class="delete-btn" onclick="deletePost('${post.id}')">Удалить</button>`
+                    : '';
+
+                // Комментарии
+                const commentsHtml = (post.comments || []).map(comment => {
+                    const commentDate = new Date(comment.date).toLocaleString('ru-RU');
+                    return `
+                        <div class="comment">
+                            <div class="comment-author">${comment.author} • ${commentDate}</div>
+                            <div class="comment-text">${comment.text}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Форма для комментария
+                const commentForm = `
+                    <div class="comment-form">
+                        <textarea id="comment-${post.id}" placeholder="Написать комментарий..."></textarea>
+                        <button class="comment-btn" onclick="addComment('${post.id}')">Комментировать</button>
+                    </div>
+                `;
+
                 postDiv.innerHTML = `
-                    <div class="post-author">${post.author}</div>
+                    <div class="post-author ${post.authorId === currentUser.id && currentUser.isAdmin ? 'admin' : ''}">
+                        ${post.author}${post.authorId === currentUser.id && currentUser.isAdmin ? ' 👑' : ''}
+                    </div>
                     <div class="post-text">${post.text}</div>
                     <div class="post-date">${dateStr}</div>
-                    <button class="delete-btn" onclick="deletePost('${post.id}')">Удалить</button>
+                    ${deleteBtn}
+                    <div class="comments">
+                        <strong style="font-size: 12px; color: #666;">Комментарии (${(post.comments || []).length}):</strong>
+                        ${commentsHtml}
+                        ${commentForm}
+                    </div>
                 `;
                 
                 postsDiv.appendChild(postDiv);
@@ -162,11 +363,15 @@
 
         // Функция для добавления нового поста
         async function addPost() {
-            const author = document.getElementById('author').value.trim();
+            if (!currentUser) {
+                alert('Сначала войди!');
+                return;
+            }
+
             const text = document.getElementById('text').value.trim();
 
-            if (!author || !text) {
-                alert('Заполни имя и текст поста!');
+            if (!text) {
+                alert('Напиши что-нибудь!');
                 return;
             }
 
@@ -176,7 +381,11 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ author, text })
+                    body: JSON.stringify({ 
+                        text, 
+                        authorId: currentUser.id,
+                        author: currentUser.username
+                    })
                 });
 
                 if (response.ok) {
@@ -191,6 +400,45 @@
             }
         }
 
+        // Функция для добавления комментария
+        async function addComment(postId) {
+            if (!currentUser) {
+                alert('Сначала войди!');
+                return;
+            }
+
+            const text = document.getElementById(`comment-${postId}`).value.trim();
+
+            if (!text) {
+                alert('Напиши комментарий!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/posts/${postId}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        text, 
+                        authorId: currentUser.id,
+                        author: currentUser.username
+                    })
+                });
+
+                if (response.ok) {
+                    document.getElementById(`comment-${postId}`).value = '';
+                    loadPosts();
+                } else {
+                    alert('Ошибка при добавлении комментария');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при добавлении комментария');
+            }
+        }
+
         // Функция для удаления поста
         async function deletePost(id) {
             if (!confirm('Удалить этот пост?')) {
@@ -199,13 +447,21 @@
 
             try {
                 const response = await fetch(`/api/posts/${id}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        userId: currentUser.id,
+                        isAdmin: currentUser.isAdmin
+                    })
                 });
 
                 if (response.ok) {
                     loadPosts();
                 } else {
-                    alert('Ошибка при удалении поста');
+                    const data = await response.json();
+                    alert(data.error || 'Ошибка при удалении поста');
                 }
             } catch (error) {
                 console.error('Ошибка:', error);
