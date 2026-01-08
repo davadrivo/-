@@ -106,10 +106,15 @@ app.post('/api/login', (req, res) => {
   const usernameLower = username.trim().toLowerCase();
   
   const user = usersData.users.find(u => 
-    u.username.toLowerCase() === usernameLower && u.password === password.trim()
+    u.username.toLowerCase() === usernameLower
   );
 
   if (!user) {
+    return res.status(401).json({ error: 'Неверный ник или пароль' });
+  }
+
+  // Проверяем пароль (если у пользователя нет пароля, значит это старый пользователь - отказываем)
+  if (!user.password || user.password !== password.trim()) {
     return res.status(401).json({ error: 'Неверный ник или пароль' });
   }
 
