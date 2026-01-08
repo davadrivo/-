@@ -12,49 +12,111 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
-            max-width: 600px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 680px;
             margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 16px 0;
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         h1 {
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
+            color: #f0f6fc;
+            font-size: 20px;
+            font-weight: 600;
         }
 
         .login-form, .post-form {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .login-form h2 {
+            color: #f0f6fc;
+            font-size: 18px;
+            margin-bottom: 16px;
+            font-weight: 600;
         }
 
         .user-info {
-            background: #1da1f2;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .user-info.admin {
-            background: #e74c3c;
+            border-color: #f85149;
+            background: #1c2128;
+        }
+
+        .user-info.admin .username {
+            color: #f85149;
+        }
+
+        .username {
+            color: #58a6ff;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .admin-badge {
+            color: #f85149;
+            font-size: 12px;
+            margin-left: 8px;
         }
 
         input, textarea {
             width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
             font-size: 14px;
+            color: #c9d1d9;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #6e7681;
         }
 
         textarea {
@@ -63,143 +125,209 @@
         }
 
         button {
-            background: #1da1f2;
+            background: #238636;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            transition: background 0.2s;
         }
 
         button:hover {
-            background: #1a91da;
+            background: #2ea043;
+        }
+
+        button.logout-btn {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+        }
+
+        button.logout-btn:hover {
+            background: #30363d;
+            border-color: #484f58;
         }
 
         .posts {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
         }
 
         .post {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 16px;
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
         }
 
         .post-author {
-            font-weight: bold;
-            color: #1da1f2;
-            margin-bottom: 5px;
+            font-weight: 600;
+            color: #58a6ff;
+            font-size: 14px;
         }
 
         .post-author.admin {
-            color: #e74c3c;
+            color: #f85149;
         }
 
         .post-text {
-            color: #333;
-            margin-bottom: 10px;
-            line-height: 1.5;
+            color: #c9d1d9;
+            margin-bottom: 12px;
+            line-height: 1.6;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #21262d;
         }
 
         .post-date {
             font-size: 12px;
-            color: #999;
-            margin-bottom: 10px;
+            color: #8b949e;
         }
 
         .delete-btn {
-            background: #e74c3c;
-            padding: 5px 10px;
+            background: #da3633;
+            padding: 4px 12px;
             font-size: 12px;
         }
 
         .delete-btn:hover {
-            background: #c0392b;
+            background: #f85149;
         }
 
         .comments {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #21262d;
+        }
+
+        .comments-title {
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 12px;
+            font-weight: 600;
         }
 
         .comment {
-            background: #f9f9f9;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
+            background: #0d1117;
+            border: 1px solid #21262d;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
         }
 
         .comment-author {
-            font-weight: bold;
+            font-weight: 600;
             font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
+            color: #58a6ff;
+            margin-bottom: 6px;
         }
 
         .comment-text {
-            font-size: 14px;
-            color: #333;
+            font-size: 13px;
+            color: #c9d1d9;
+            line-height: 1.5;
+        }
+
+        .comment-date {
+            font-size: 11px;
+            color: #6e7681;
+            margin-left: 8px;
         }
 
         .comment-form {
-            margin-top: 10px;
+            margin-top: 12px;
         }
 
         .comment-form textarea {
             min-height: 60px;
             font-size: 13px;
+            margin-bottom: 8px;
         }
 
         .comment-btn {
-            background: #17bf63;
-            padding: 5px 15px;
+            background: #238636;
+            padding: 6px 12px;
             font-size: 12px;
         }
 
         .comment-btn:hover {
-            background: #15a357;
+            background: #2ea043;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #6e7681;
+            margin-top: 8px;
+            line-height: 1.5;
         }
 
         .hidden {
             display: none;
         }
+
+        .empty-state {
+            text-align: center;
+            color: #6e7681;
+            padding: 40px 20px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <h1>🐦 Простая Соц Сеть</h1>
-    
-    <!-- Форма регистрации/логина -->
-    <div class="login-form" id="loginForm">
-        <h2>Вход / Регистрация</h2>
-        <input type="text" id="username" placeholder="Твой ник (уникальный)" required>
-        <input type="text" id="adminCode" placeholder="Кодовое слово для админа (необязательно)">
-        <button onclick="register()">Войти / Зарегистрироваться</button>
-        <p style="font-size: 12px; color: #999; margin-top: 10px;">
-            Если ник занят, выбери другой. Кодовое слово для админа: "часы"
-        </p>
-    </div>
-
-    <!-- Информация о пользователе -->
-    <div class="user-info hidden" id="userInfo">
-        <div>
-            <strong id="currentUsername"></strong>
-            <span id="adminBadge" class="hidden"> 👑 АДМИН</span>
+    <div class="header">
+        <div class="header-content">
+            <h1>Лента</h1>
+            <div class="user-info hidden" id="userInfoHeader">
+                <span class="username">
+                    <span id="currentUsernameHeader"></span>
+                    <span id="adminBadgeHeader" class="admin-badge hidden">👑</span>
+                </span>
+                <button class="logout-btn" onclick="logout()">Выйти</button>
+            </div>
         </div>
-        <button onclick="logout()" style="background: #999;">Выйти</button>
-    </div>
-    
-    <!-- Форма для поста -->
-    <div class="post-form hidden" id="postForm">
-        <textarea id="text" placeholder="Что у тебя нового?" required></textarea>
-        <button onclick="addPost()">Опубликовать</button>
     </div>
 
-    <div class="posts" id="posts"></div>
+    <div class="container">
+        <!-- Форма регистрации/логина -->
+        <div class="login-form" id="loginForm">
+            <h2>Вход / Регистрация</h2>
+            <input type="text" id="username" placeholder="Твой ник (уникальный)" required>
+            <input type="text" id="adminCode" placeholder="Кодовое слово для админа (необязательно)">
+            <button onclick="register()">Войти / Зарегистрироваться</button>
+            <p class="info-text">
+                Если ник занят, выбери другой. Кодовое слово для админа: "часы"
+            </p>
+        </div>
+        
+        <!-- Форма для поста -->
+        <div class="post-form hidden" id="postForm">
+            <textarea id="text" placeholder="Что у тебя нового?" required></textarea>
+            <button onclick="addPost()">Опубликовать</button>
+        </div>
+
+        <div class="posts" id="posts"></div>
+    </div>
 
     <script>
         let currentUser = null;
@@ -250,18 +378,15 @@
         // Показать основной интерфейс
         function showMainInterface() {
             document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('userInfo').classList.remove('hidden');
+            document.getElementById('userInfoHeader').classList.remove('hidden');
             document.getElementById('postForm').classList.remove('hidden');
             
-            const userInfo = document.getElementById('userInfo');
-            document.getElementById('currentUsername').textContent = currentUser.username;
+            document.getElementById('currentUsernameHeader').textContent = currentUser.username;
             
             if (currentUser.isAdmin) {
-                userInfo.classList.add('admin');
-                document.getElementById('adminBadge').classList.remove('hidden');
+                document.getElementById('adminBadgeHeader').classList.remove('hidden');
             } else {
-                userInfo.classList.remove('admin');
-                document.getElementById('adminBadge').classList.add('hidden');
+                document.getElementById('adminBadgeHeader').classList.add('hidden');
             }
 
             loadPosts();
@@ -272,10 +397,11 @@
             currentUser = null;
             localStorage.removeItem('currentUser');
             document.getElementById('loginForm').classList.remove('hidden');
-            document.getElementById('userInfo').classList.add('hidden');
+            document.getElementById('userInfoHeader').classList.add('hidden');
             document.getElementById('postForm').classList.add('hidden');
             document.getElementById('username').value = '';
             document.getElementById('adminCode').value = '';
+            document.getElementById('posts').innerHTML = '';
         }
 
         // Загружаем посты при загрузке страницы
@@ -307,7 +433,7 @@
             postsDiv.innerHTML = '';
 
             if (posts.length === 0) {
-                postsDiv.innerHTML = '<p style="text-align: center; color: #999;">Пока нет постов. Будь первым!</p>';
+                postsDiv.innerHTML = '<div class="empty-state">Пока нет постов. Будь первым!</div>';
                 return;
             }
 
@@ -329,7 +455,7 @@
                     const commentDate = new Date(comment.date).toLocaleString('ru-RU');
                     return `
                         <div class="comment">
-                            <div class="comment-author">${comment.author} • ${commentDate}</div>
+                            <div class="comment-author">${comment.author}<span class="comment-date">• ${commentDate}</span></div>
                             <div class="comment-text">${comment.text}</div>
                         </div>
                     `;
@@ -343,15 +469,22 @@
                     </div>
                 `;
 
+                const isPostAuthorAdmin = post.authorId === currentUser.id && currentUser.isAdmin;
+                const authorClass = isPostAuthorAdmin ? 'admin' : '';
+                
                 postDiv.innerHTML = `
-                    <div class="post-author ${post.authorId === currentUser.id && currentUser.isAdmin ? 'admin' : ''}">
-                        ${post.author}${post.authorId === currentUser.id && currentUser.isAdmin ? ' 👑' : ''}
+                    <div class="post-header">
+                        <div class="post-author ${authorClass}">
+                            ${post.author}${isPostAuthorAdmin ? ' 👑' : ''}
+                        </div>
+                        ${deleteBtn ? `<div>${deleteBtn}</div>` : ''}
                     </div>
                     <div class="post-text">${post.text}</div>
-                    <div class="post-date">${dateStr}</div>
-                    ${deleteBtn}
+                    <div class="post-footer">
+                        <div class="post-date">${dateStr}</div>
+                    </div>
                     <div class="comments">
-                        <strong style="font-size: 12px; color: #666;">Комментарии (${(post.comments || []).length}):</strong>
+                        <div class="comments-title">Комментарии (${(post.comments || []).length})</div>
                         ${commentsHtml}
                         ${commentForm}
                     </div>
