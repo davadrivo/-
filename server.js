@@ -55,10 +55,14 @@ function writeUsers(data) {
 
 // Регистрация нового пользователя
 app.post('/api/register', (req, res) => {
-  const { username, adminCode } = req.body;
+  const { username, password, adminCode } = req.body;
   
   if (!username || username.trim().length === 0) {
     return res.status(400).json({ error: 'Нужен никнейм' });
+  }
+
+  if (!password || password.trim().length === 0) {
+    return res.status(400).json({ error: 'Нужен пароль (минимум 1 символ)' });
   }
 
   const usersData = readUsers();
@@ -75,6 +79,7 @@ app.post('/api/register', (req, res) => {
   const newUser = {
     id: Date.now().toString(),
     username: username.trim(),
+    password: password.trim(), // Сохраняем пароль (в реальном проекте нужно хешировать!)
     isAdmin: isAdmin,
     date: new Date().toISOString()
   };
@@ -86,6 +91,32 @@ app.post('/api/register', (req, res) => {
     id: newUser.id,
     username: newUser.username,
     isAdmin: newUser.isAdmin
+  });
+});
+
+// Вход пользователя
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Нужен никнейм и пароль' });
+  }
+
+  const usersData = readUsers();
+  const usernameLower = username.trim().toLowerCase();
+  
+  const user = usersData.users.find(u => 
+    u.username.toLowerCase() === usernameLower && u.password === password.trim()
+  );
+
+  if (!user) {
+    return res.status(401).json({ error: 'Неверный ник или пароль' });
+  }
+
+  res.json({ 
+    id: user.id,
+    username: user.username,
+    isAdmin: user.isAdmin
   });
 });
 
