@@ -219,6 +219,49 @@
             word-wrap: break-word;
         }
 
+        .post-actions {
+            display: flex;
+            gap: 20px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e1e8ed;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: transparent;
+            border: none;
+            color: #657786;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .action-btn:hover {
+            background: #f7f9fa;
+            color: #1da1f2;
+        }
+
+        .action-btn.liked {
+            color: #e0245e;
+        }
+
+        .action-btn.liked:hover {
+            color: #c91e56;
+        }
+
+        .action-icon {
+            font-size: 18px;
+        }
+
+        .action-count {
+            font-weight: 600;
+        }
 
         .delete-btn {
             background: #e0245e;
@@ -236,6 +279,11 @@
             margin-top: 16px;
             padding-top: 16px;
             border-top: 1px solid #e1e8ed;
+            display: none;
+        }
+
+        .comments.visible {
+            display: block;
         }
 
         .comments-title {
@@ -518,12 +566,12 @@
             loadPosts();
         }
 
-        // Загружаем посты каждые 3 секунды
+        // Загружаем посты каждые 10 секунд
         setInterval(() => {
             if (currentUser) {
                 loadPosts();
             }
-        }, 3000);
+        }, 10000);
 
         // Сохраняем все комментарии в localStorage синхронно
         function saveAllCommentsToStorage() {
@@ -638,6 +686,11 @@
                 const postDate = new Date(post.date);
                 const postDateStr = `${months[postDate.getMonth()]} ${postDate.getHours().toString().padStart(2, '0')}:${postDate.getMinutes().toString().padStart(2, '0')}`;
 
+                // Проверяем лайкнул ли текущий пользователь
+                const isLiked = currentUser && post.likes && post.likes.includes(currentUser.id);
+                const likesCount = post.likesCount || (post.likes ? post.likes.length : 0);
+                const commentsCount = (post.comments || []).length;
+
                 postDiv.innerHTML = `
                     <div class="post-header">
                         <div class="post-author ${authorClass}">
@@ -647,8 +700,18 @@
                         ${deleteBtn ? `<div>${deleteBtn}</div>` : ''}
                     </div>
                     <div class="post-text">${post.text}</div>
-                    <div class="comments">
-                        <div class="comments-title">Комментарии (${(post.comments || []).length})</div>
+                    <div class="post-actions">
+                        <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
+                            <span class="action-icon">${isLiked ? '❤️' : '🤍'}</span>
+                            <span class="action-count">${likesCount}</span>
+                        </button>
+                        <button class="action-btn" onclick="toggleComments('${post.id}')">
+                            <span class="action-icon">💬</span>
+                            <span class="action-count">${commentsCount}</span>
+                        </button>
+                    </div>
+                    <div class="comments" id="comments-${post.id}">
+                        <div class="comments-title">Комментарии (${commentsCount})</div>
                         ${commentsHtml}
                         ${commentForm}
                     </div>
@@ -745,7 +808,12 @@
                     localStorage.setItem('savedComments', JSON.stringify(savedComments));
                     
                     document.getElementById(`comment-${postId}`).value = '';
+                    // Обновляем посты и оставляем комментарии открытыми
                     loadPosts();
+                    // Открываем комментарии после обновления
+                    setTimeout(() => {
+                        toggleComments(postId);
+                    }, 100);
                 } else {
                     alert('Ошибка при добавлении комментария');
                 }
@@ -782,6 +850,56 @@
             } catch (error) {
                 console.error('Ошибка:', error);
                 alert('Ошибка при удалении поста');
+            }
+        }
+
+        // Функция для лайка/дизлайка поста
+        async function toggleLike(postId) {
+            if (!currentUser) {
+                alert('Сначала войди!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/posts/${postId}/like`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        userId: currentUser.id
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Обновляем только счетчик лайков и иконку без полной перезагрузки
+                    const likeBtn = document.querySelector(`button[onclick="toggleLike('${postId}')"]`);
+                    if (likeBtn) {
+                        const countSpan = likeBtn.querySelector('.action-count');
+                        const iconSpan = likeBtn.querySelector('.action-icon');
+                        if (countSpan) countSpan.textContent = data.likesCount;
+                        if (iconSpan) iconSpan.textContent = data.isLiked ? '❤️' : '🤍';
+                        if (data.isLiked) {
+                            likeBtn.classList.add('liked');
+                        } else {
+                            likeBtn.classList.remove('liked');
+                        }
+                    }
+                } else {
+                    alert('Ошибка при лайке поста');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при лайке поста');
+            }
+        }
+
+        // Функция для показа/скрытия комментариев
+        function toggleComments(postId) {
+            const commentsDiv = document.getElementById(`comments-${postId}`);
+            if (commentsDiv) {
+                commentsDiv.classList.toggle('visible');
             }
         }
     </script>
