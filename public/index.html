@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Простая Соц Сеть</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .post-form {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        button {
+            background: #1da1f2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #1a91da;
+        }
+
+        .posts {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .post {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .post-author {
+            font-weight: bold;
+            color: #1da1f2;
+            margin-bottom: 5px;
+        }
+
+        .post-text {
+            color: #333;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .post-date {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 10px;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐦 Простая Соц Сеть</h1>
+    
+    <div class="post-form">
+        <input type="text" id="author" placeholder="Твое имя" required>
+        <textarea id="text" placeholder="Что у тебя нового?" required></textarea>
+        <button onclick="addPost()">Опубликовать</button>
+    </div>
+
+    <div class="posts" id="posts"></div>
+
+    <script>
+        // Загружаем посты при загрузке страницы
+        loadPosts();
+
+        // Загружаем посты каждые 3 секунды (чтобы видеть новые посты других)
+        setInterval(loadPosts, 3000);
+
+        // Функция для загрузки всех постов
+        async function loadPosts() {
+            try {
+                const response = await fetch('/api/posts');
+                const posts = await response.json();
+                displayPosts(posts);
+            } catch (error) {
+                console.error('Ошибка загрузки постов:', error);
+            }
+        }
+
+        // Функция для отображения постов на странице
+        function displayPosts(posts) {
+            const postsDiv = document.getElementById('posts');
+            postsDiv.innerHTML = '';
+
+            if (posts.length === 0) {
+                postsDiv.innerHTML = '<p style="text-align: center; color: #999;">Пока нет постов. Будь первым!</p>';
+                return;
+            }
+
+            posts.forEach(post => {
+                const postDiv = document.createElement('div');
+                postDiv.className = 'post';
+                
+                const date = new Date(post.date);
+                const dateStr = date.toLocaleString('ru-RU');
+
+                postDiv.innerHTML = `
+                    <div class="post-author">${post.author}</div>
+                    <div class="post-text">${post.text}</div>
+                    <div class="post-date">${dateStr}</div>
+                    <button class="delete-btn" onclick="deletePost('${post.id}')">Удалить</button>
+                `;
+                
+                postsDiv.appendChild(postDiv);
+            });
+        }
+
+        // Функция для добавления нового поста
+        async function addPost() {
+            const author = document.getElementById('author').value.trim();
+            const text = document.getElementById('text').value.trim();
+
+            if (!author || !text) {
+                alert('Заполни имя и текст поста!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/posts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ author, text })
+                });
+
+                if (response.ok) {
+                    document.getElementById('text').value = '';
+                    loadPosts();
+                } else {
+                    alert('Ошибка при публикации поста');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при публикации поста');
+            }
+        }
+
+        // Функция для удаления поста
+        async function deletePost(id) {
+            if (!confirm('Удалить этот пост?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/posts/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadPosts();
+                } else {
+                    alert('Ошибка при удалении поста');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при удалении поста');
+            }
+        }
+    </script>
+</body>
+</html>
