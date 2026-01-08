@@ -525,23 +525,40 @@
             }
         }, 3000);
 
-        // Сохраняем текст комментариев перед обновлением
-        function saveCommentTexts() {
-            const commentTexts = {};
+        // Сохраняем все комментарии в localStorage синхронно
+        function saveAllCommentsToStorage() {
+            const savedComments = {};
             document.querySelectorAll('[id^="comment-"]').forEach(textarea => {
                 const postId = textarea.id.replace('comment-', '');
-                const text = textarea.value; // Сохраняем даже пустой текст, чтобы не потерять позицию курсора
-                commentTexts[postId] = text;
+                const text = textarea.value;
+                if (text) {
+                    savedComments[postId] = text;
+                }
             });
-            return commentTexts;
+            // Сохраняем синхронно в localStorage
+            if (Object.keys(savedComments).length > 0) {
+                localStorage.setItem('savedComments', JSON.stringify(savedComments));
+            }
+            return savedComments;
         }
 
         // Сохраняем текст комментария в реальном времени
         function setupCommentAutoSave(postId) {
             const textarea = document.getElementById(`comment-${postId}`);
             if (textarea) {
-                // Сохраняем при каждом изменении
-                textarea.addEventListener('input', function() {
+                // Удаляем старые обработчики если есть
+                const newTextarea = textarea.cloneNode(true);
+                textarea.parentNode.replaceChild(newTextarea, textarea);
+                
+                // Сохраняем при каждом изменении (включая ввод символов)
+                newTextarea.addEventListener('input', function() {
+                    const savedComments = JSON.parse(localStorage.getItem('savedComments') || '{}');
+                    savedComments[postId] = this.value;
+                    localStorage.setItem('savedComments', JSON.stringify(savedComments));
+                });
+                
+                // Также сохраняем при потере фокуса
+                newTextarea.addEventListener('blur', function() {
                     const savedComments = JSON.parse(localStorage.getItem('savedComments') || '{}');
                     savedComments[postId] = this.value;
                     localStorage.setItem('savedComments', JSON.stringify(savedComments));
@@ -551,17 +568,16 @@
 
         // Функция для загрузки всех постов
         async function loadPosts() {
-            // Сохраняем текст комментариев перед обновлением
-            const savedComments = saveCommentTexts();
-            // Также берем из localStorage для надежности
+            // ВАЖНО: Сохраняем все комментарии СИНХРОННО перед обновлением
+            saveAllCommentsToStorage();
+            
+            // Берем сохраненные комментарии из localStorage
             const savedFromStorage = JSON.parse(localStorage.getItem('savedComments') || '{}');
-            // Объединяем оба источника (приоритет у текущих значений)
-            const allSaved = { ...savedFromStorage, ...savedComments };
             
             try {
                 const response = await fetch('/api/posts');
                 const posts = await response.json();
-                displayPosts(posts, allSaved);
+                displayPosts(posts, savedFromStorage);
             } catch (error) {
                 console.error('Ошибка загрузки постов:', error);
             }
@@ -605,10 +621,12 @@
 
                 // Форма для комментария
                 // Восстанавливаем сохраненный текст комментария если есть
-                const savedText = (savedComments[post.id] || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const savedText = savedComments[post.id] || '';
+                // Экранируем HTML символы для безопасности
+                const escapedText = savedText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
                 const commentForm = currentUser ? `
                     <div class="comment-form">
-                        <textarea id="comment-${post.id}" placeholder="Написать комментарий...">${savedText}</textarea>
+                        <textarea id="comment-${post.id}" placeholder="Написать комментарий...">${escapedText}</textarea>
                         <button class="comment-btn" onclick="addComment('${post.id}')">Комментировать</button>
                     </div>
                 ` : '';
@@ -640,7 +658,16 @@
                 
                 // Настраиваем автосохранение для комментария
                 if (currentUser) {
-                    setTimeout(() => setupCommentAutoSave(post.id), 100);
+                    // Используем requestAnimationFrame для более надежного восстановления
+                    requestAnimationFrame(() => {
+                        setupCommentAutoSave(post.id);
+                        // Восстанавливаем позицию курсора если текст был сохранен
+                        const textarea = document.getElementById(`comment-${post.id}`);
+                        if (textarea && savedComments[post.id]) {
+                            // Устанавливаем курсор в конец текста
+                            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                        }
+                    });
                 }
             });
         }
