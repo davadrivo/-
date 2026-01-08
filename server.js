@@ -152,7 +152,9 @@ app.post('/api/posts', (req, res) => {
     author: author,
     authorId: authorId,
     date: new Date().toISOString(),
-    comments: []
+    comments: [],
+    likes: [],
+    likesCount: 0
   };
 
   data.posts.unshift(newPost); // Добавляем в начало
@@ -190,6 +192,47 @@ app.post('/api/posts/:id/comments', (req, res) => {
   writeData(data);
 
   res.json(newComment);
+});
+
+// Лайк/дизлайк поста
+app.post('/api/posts/:id/like', (req, res) => {
+  const { userId } = req.body;
+  const postId = req.params.id;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Нужен ID пользователя' });
+  }
+
+  const data = readData();
+  const post = data.posts.find(p => p.id === postId);
+
+  if (!post) {
+    return res.status(404).json({ error: 'Пост не найден' });
+  }
+
+  // Инициализируем массив лайков если его нет
+  if (!post.likes) {
+    post.likes = [];
+  }
+
+  // Проверяем есть ли уже лайк от этого пользователя
+  const likeIndex = post.likes.indexOf(userId);
+  
+  if (likeIndex > -1) {
+    // Убираем лайк (дизлайк)
+    post.likes.splice(likeIndex, 1);
+  } else {
+    // Добавляем лайк
+    post.likes.push(userId);
+  }
+
+  post.likesCount = post.likes.length;
+  writeData(data);
+
+  res.json({ 
+    likesCount: post.likesCount,
+    isLiked: post.likes.includes(userId)
+  });
 });
 
 // Удалить пост
