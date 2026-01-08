@@ -378,12 +378,22 @@
 
         // Проверяем есть ли сохраненный пользователь
         window.onload = function() {
-            const saved = localStorage.getItem('currentUser');
-            if (saved) {
-                currentUser = JSON.parse(saved);
-                showMainInterface();
+            try {
+                const saved = localStorage.getItem('currentUser');
+                if (saved) {
+                    currentUser = JSON.parse(saved);
+                    showMainInterface();
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке пользователя:', error);
             }
         };
+
+        // Обработка ошибок JavaScript
+        window.addEventListener('error', function(e) {
+            console.error('Ошибка JavaScript:', e.error);
+            alert('Произошла ошибка. Проверь консоль браузера (F12)');
+        });
 
         // Регистрация
         async function register() {
@@ -410,7 +420,14 @@
                     body: JSON.stringify({ username, password, adminCode })
                 });
 
-                const data = await response.json();
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    console.error('Ошибка парсинга JSON:', e);
+                    alert('Ошибка сервера. Проверь что сервер запущен.');
+                    return;
+                }
 
                 if (response.ok) {
                     currentUser = data;
@@ -421,7 +438,7 @@
                 }
             } catch (error) {
                 console.error('Ошибка:', error);
-                alert('Ошибка при регистрации');
+                alert('Ошибка при регистрации: ' + error.message);
             }
         }
 
@@ -444,7 +461,14 @@
                     body: JSON.stringify({ username, password })
                 });
 
-                const data = await response.json();
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    console.error('Ошибка парсинга JSON:', e);
+                    alert('Ошибка сервера. Проверь что сервер запущен.');
+                    return;
+                }
 
                 if (response.ok) {
                     currentUser = data;
@@ -455,7 +479,7 @@
                 }
             } catch (error) {
                 console.error('Ошибка:', error);
-                alert('Ошибка при входе');
+                alert('Ошибка при входе: ' + error.message);
             }
         }
 
