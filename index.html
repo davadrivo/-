@@ -550,6 +550,20 @@
       font-size: 14px;
     }
   }
+  /* ── CUSTOM CURSOR ── */
+  * { cursor: none !important; }
+  .cursor-dot {
+    position: fixed;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 99999;
+    transform: translate(-50%, -50%);
+    transition: width 0.15s ease, height 0.15s ease;
+    mix-blend-mode: difference;
+  }
 </style>
 </head>
 <body>
@@ -732,6 +746,22 @@
       burgerBtn.setAttribute('aria-expanded', 'false');
       document.body.style.overflow = '';
     }
+  });
+</script>
+<div class="cursor-dot" id="cursorDot"></div>
+<script>
+  const cursorDot = document.getElementById('cursorDot');
+  document.addEventListener('mousemove', (e) => {
+    cursorDot.style.left = e.clientX + 'px';
+    cursorDot.style.top  = e.clientY + 'px';
+  });
+  document.addEventListener('mousedown', () => {
+    cursorDot.style.width  = '20px';
+    cursorDot.style.height = '20px';
+  });
+  document.addEventListener('mouseup', () => {
+    cursorDot.style.width  = '14px';
+    cursorDot.style.height = '14px';
   });
 </script>
 </body></html>
